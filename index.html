@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Readiness Tracker SWM-SUD Mobile</title>
+<meta name="theme-color" content="#0E6B66">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- Fonts & Libraries -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --primary: #0E6B66;
+  --primary-dark: #094744;
+  --primary-light: #E6F2F1;
+  --accent: #1B3A57;
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-sub: #F1F5F9;
+  --border: #E2E8F0;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  
+  --good: #10B981;
+  --good-bg: #D1FAE5;
+  --warn: #F59E0B;
+  --warn-bg: #FEF3C7;
+  --bad: #EF4444;
+  --bad-bg: #FEE2E2;
+  --info: #3B82F6;
+  --info-bg: #DBEAFE;
+  
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 16px;
+  --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  --font: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --surface: #1E293B;
+  --surface-sub: #334155;
+  --border: #334155;
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --primary-light: #1E3A37;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0; padding: 0;
+  font-family: var(--font);
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* App Header */
+.app-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--primary);
+  color: #FFF;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.app-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+.app-subtitle { font-size: 11px; opacity: 0.85; font-weight: 400; }
+.header-actions { display: flex; gap: 8px; }
+.icon-btn {
+  background: rgba(255,255,255,0.15); border: 0; color: #FFF;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer; transition: 0.2s;
+}
+.icon-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.3); }
+
+/* Main Container */
+.app-content {
+  padding: 12px 12px calc(80px + env(safe-area-inset-bottom));
+  max-width: 600px; margin: 0 auto;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around;
+  padding: 6px 0 calc(env(safe-area-inset-bottom) + 6px);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  background: none; border: 0; color: var(--text-muted);
+  padding: 6px 0; font-size: 10px; font-weight: 500; font-family: var(--font);
+  cursor: pointer; transition: 0.2s;
+}
+.nav-item i { font-size: 18px; margin-bottom: 3px; }
+.nav-item.active { color: var(--primary); font-weight: 700; }
+
+/* Cards & Components */
+.card {
+  background: var(--surface); border-radius: var(--radius-m);
+  padding: 14px; margin-bottom: 12px; border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 15px; font-weight: 700; margin: 0 0 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* KPI Horizontal Scroll Slider */
+.kpi-slider {
+  display: flex; gap: 10px; overflow-x: auto;
+  padding-bottom: 6px; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.kpi-card {
+  flex: 0 0 130px; scroll-snap-align: start;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-m); padding: 12px;
+  box-shadow: var(--shadow);
+}
+.kpi-card b { display: block; font-size: 22px; font-weight: 700; line-height: 1.2; margin-top: 4px; }
+.kpi-card span { font-size: 11px; color: var(--text-muted); }
+
+/* Badges & Pills */
+.pill {
+  display: inline-flex; align-items: center; padding: 3px 8px;
+  border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.p-good { background: var(--good-bg); color: var(--good); }
+.p-warn { background: var(--warn-bg); color: var(--warn); }
+.p-bad { background: var(--bad-bg); color: var(--bad); }
+.p-info { background: var(--info-bg); color: var(--info); }
+
+/* Form Controls */
+.mobile-input, .mobile-select {
+  width: 100%; padding: 10px 12px; border-radius: var(--radius-s);
+  border: 1px solid var(--border); background: var(--surface-sub);
+  color: var(--text-main); font-family: var(--font); font-size: 13px;
+  margin-bottom: 8px; outline: none;
+}
+.mobile-input:focus, .mobile-select:focus { border-color: var(--primary); }
+
+/* Custom Accordion for Lists */
+.acc-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-s); margin-bottom: 8px; overflow: hidden;
+}
+.acc-header {
+  padding: 12px; display: flex; align-items: center; justify-content: space-between;
+  font-weight: 600; cursor: pointer; background: var(--surface);
+}
+.acc-body { padding: 12px; border-top: 1px solid var(--border); background: var(--surface-sub); font-size: 12.5px; }
+
+/* Login Modal Screen */
+#login-screen {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.login-box {
+  width: 100%; max-width: 360px; background: var(--surface);
+  border-radius: var(--radius-l); padding: 24px 20px;
+  box-shadow: var(--shadow-lg); text-align: center; border: 1px solid var(--border);
+}
+.login-btn {
+  width: 100%; padding: 12px; background: var(--primary); color: #FFF;
+  border: 0; border-radius: var(--radius-s); font-weight: 700;
+  font-size: 14px; margin-top: 12px; cursor: pointer;
+}
+
+/* Charts */
+.chart-box { position: relative; height: 220px; width: 100%; }
+
+/* Table Mobile Styling */
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 8px; }
+table.m-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+table.m-table th, table.m-table td { padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+table.m-table th { background: var(--surface-sub); font-weight: 600; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN MODAL -->
+<div id="login-screen">
+  <div class="login-box">
+    <i class="fa-solid fa-truck-field-un" style="font-size:42px; color:var(--primary); margin-bottom:12px"></i>
+    <h2 style="margin:0 0 4px; font-size:18px">Readiness Tracker Mobile</h2>
+    <p style="font-size:12px; color:var(--text-muted); margin-bottom:18px">SWM-SUD (AIIB L0769A) - 14 Unit Pemda</p>
+    <form id="lform">
+      <input type="text" id="lu" class="mobile-input" placeholder="User ID" required autocomplete="username">
+      <input type="password" id="lp" class="mobile-input" placeholder="Password" required autocomplete="current-password">
+      <p id="lerr" style="color:var(--bad); font-size:11px; margin:4px 0 8px; min-height:16px"></p>
+      <button type="submit" class="login-btn">Masuk Aplikasi</button>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN APP INTERFACE -->
+<div id="app" class="hidden">
+  
+  <!-- APP HEADER -->
+  <header class="app-header">
+    <div>
+      <h1 class="app-title">SWM-SUD Tracker</h1>
+      <div class="app-subtitle" id="header-subtitle">Ringkasan Operasional</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-theme" title="Ubah Tema"><i class="fa-solid fa-moon"></i></button>
+      <button class="icon-btn" id="btn-logout" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </header>
+
+  <!-- CONTENT VIEW PORT -->
+  <main class="app-content" id="app-view"></main>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-v="ringkasan"><i class="fa-solid fa-chart-pie"></i><span>Beranda</span></button>
+    <button class="nav-item" data-v="unit"><i class="fa-solid fa-city"></i><span>Profil Unit</span></button>
+    <button class="nav-item" data-v="peta"><i class="fa-solid fa-route"></i><span>Peta Jalan</span></button>
+    <button class="nav-item" data-v="kesiapan"><i class="fa-solid fa-list-check"></i><span>Kesiapan</span></button>
+    <button class="nav-item" data-v="risiko"><i class="fa-solid fa-triangle-exclamation"></i><span>Risiko</span></button>
+  </nav>
+</div>
+
+<script>
+/* DATASET & CORE ENGINE */
+const D = {"unit":[["Prov. Aceh","Provinsi Aceh (UPTD BPSR)","Provinsi","Aceh","Regional Aceh","UPTD BLUD Balai Penanganan Sampah Regional (BPSR) Blang Bintang","UPTD-BLUD","Pergub Aceh No. 38/2021",4,"A","B (BLUD berjalan); PKS regional"],["Banda Aceh","Kota Banda Aceh","Kota","Aceh","Regional Aceh","DLHK3 Banda Aceh","Dinas","Perwal Banda Aceh No. 50/2016",1,"C","A lalu B; PKS regional"],["Aceh Besar","Kabupaten Aceh Besar","Kabupaten","Aceh","Regional Aceh","DLH Kab. Aceh Besar","Dinas","Perbup Aceh Besar No. 10/2017",1,"C","A lalu B"],["Tasikmalaya","Kabupaten Tasikmalaya","Kabupaten","Jawa Barat","Kabupaten Tasikmalaya","UPTD Kebersihan","UPTD","Perbup Tasikmalaya No. 78/2021",3,"B","B (proses BLUD)"],["Cirebon","Kabupaten Cirebon","Kabupaten","Jawa Barat","Kabupaten Cirebon","UPTD TPA","UPTD","Perbup 62/2021",3,"B","B (proses BLUD)"],["Gunungkidul","Kabupaten Gunung Kidul","Kabupaten","DI Yogyakarta","Kabupaten Gunungkidul","UPT Kebersihan","UPTD","Perbup No. 57/2023",2,"B","A lalu B"],["Temanggung","Kabupaten Temanggung","Kabupaten","Jawa Tengah","Kabupaten Temanggung","UPTD TPA-IPLT","UPTD","Perbup No. 58/2020",2,"B","A lalu B"],["Rembang","Kabupaten Rembang","Kabupaten","Jawa Tengah","Kabupaten Rembang","UPT Pengelolaan Sampah","UPTD","Perbup No. 48/2017",2,"B","A lalu B"],["Jepara","Kabupaten Jepara","Kabupaten","Jawa Tengah","Kabupaten Jepara","UPTD Pengelolaan Sampah","UPTD","Perbup No. 25/2022",2,"B","A lalu B"],["Kab. Magelang","Kabupaten Magelang","Kabupaten","Jawa Tengah","Regional Magelang","UPTD BLUD Pengelolaan Sampah","UPTD-BLUD","Perbup 7/2020",4,"A","B (BLUD berjalan)"],["Prov. Jawa Tengah","Provinsi Jawa Tengah","Provinsi","Jawa Tengah","Regional Magelang","Belum ada UPTD","Belum ada","Pergub Jateng No. 2/2026",1,"C","E hibrida/interim"],["Kota Magelang","Kota Magelang","Kota","Jawa Tengah","Regional Magelang","UPT TPSA Banyuurip","UPT TPSA","Perwal 67/2019",2,"B","B (UPTD ke BLUD)"],["Banyuwangi","Kabupaten Banyuwangi","Kabupaten","Jawa Timur","Kabupaten Banyuwangi","UPT Pengelolaan Persampahan","UPTD-BLUD","Perbup 11/2021",4,"A","B (BLUD berjalan)"],["Tabalong","Kabupaten Tabalong","Kabupaten","Kalimantan Selatan","Kabupaten Tabalong","UPTD Pengelolaan Sampah","UPTD","Perbup No. 32/2022",2,"B","A lalu B"]],
+"skor":[["Prov. Aceh","Regional Aceh","Provinsi",2,4,2,2,4,4,2,7,2.86,"Siap bersyarat",4,"A","No-go","Tinggi"],["Banda Aceh","Regional Aceh","Kota",3,1,3,null,3,4,null,5,2.8,"Siap bersyarat",1,"C","No-go","Tinggi"],["Aceh Besar","Regional Aceh","Kabupaten",3,1,null,null,3,4,null,4,2.75,"Siap bersyarat",1,"C","No-go","Tinggi"],["Tasikmalaya","Kabupaten Tasikmalaya","Kabupaten",3,3,2,2,2,3,2,7,2.43,"Berkembang",3,"B","No-go","Tinggi"],["Cirebon","Kabupaten Cirebon","Kabupaten",3,3,2,3,2,2,2,7,2.43,"Berkembang",3,"B","Belum dapat dinilai","Tinggi"],["Gunungkidul","Kabupaten Gunungkidul","Kabupaten",3,3,2,3,3,3,2,7,2.71,"Siap bersyarat",2,"B","Belum dapat dinilai","Sedang"],["Temanggung","Kabupaten Temanggung","Kabupaten",4,3,null,3,2,3,2,6,2.83,"Siap bersyarat",2,"B","Belum dapat dinilai","Sedang"],["Rembang","Kabupaten Rembang","Kabupaten",4,3,2,4,3,3,2,7,3,"Siap bersyarat",2,"B","Belum dapat dinilai","Rendah"],["Jepara","Kabupaten Jepara","Kabupaten",3,3,2,3,3,3,2,7,2.71,"Siap bersyarat",2,"B","Belum dapat dinilai","Sedang"],["Kab. Magelang","Regional Magelang","Kabupaten",4,4,3,3,4,4,3,7,3.57,"Siap bersyarat",4,"A","Belum dapat dinilai","Rendah"],["Prov. Jawa Tengah","Regional Magelang","Provinsi",2,2,null,null,2,4,2,5,2.4,"Berkembang",1,"C","No-go","Tinggi"],["Kota Magelang","Regional Magelang","Kota",3,2,2,3,3,null,1,6,2.33,"Berkembang",2,"B","Belum dapat dinilai","Tinggi"],["Banyuwangi","Kabupaten Banyuwangi","Kabupaten",4,4,2,3,4,4,2,7,3.29,"Siap bersyarat",4,"A","Belum dapat dinilai","Rendah"],["Tabalong","Kabupaten Tabalong","Kabupaten",2,2,2,2,2,3,2,7,2.14,"Berkembang",2,"B","No-go","Tinggi"]],
+"aksi":[["Regional Aceh","Banda Aceh","BNA-01","Melengkapi data anggaran O&M","Data","DLHK3","T1","2026-10-01","2026-11-30","Tinggi","Belum mulai","Perlu dimulai"],["Regional Aceh","Banda Aceh","BNA-02","Kajian bentuk operator UPTD","D2","Sekda; DLHK3","T2","2026-12-01","2027-02-28","Tinggi","Belum mulai","Terjadwal"],["Regional Aceh","Aceh Besar","ACB-01","Melengkapi isian matriks baseline","Data","DLH Aceh Besar","T1","2026-10-01","2026-11-30","Tinggi","Belum mulai","Perlu dimulai"],["Tasikmalaya","Tasikmalaya","TSK-01","Klarifikasi dasar hukum UPTD","D1/D2","DPUTRLH","T1","2026-10-01","2026-11-30","Sedang","Belum mulai","Perlu dimulai"],["Cirebon","Cirebon","CRB-01","Verifikasi dasar hukum UPTD TPAS","D2","Bagian Hukum; DLH","T1","2026-10-01","2026-11-30","Tinggi","Belum mulai","Perlu dimulai"],["Gunungkidul","Gunungkidul","GNK-01","Menyusun matriks baseline Gunungkidul","Data","DLH; UPT Kebersihan","T1","2026-10-01","2026-11-30","Tinggi","Selesai","Selesai"],["Temanggung","Temanggung","TMG-01","Menyusun matriks baseline Temanggung","Data","DLH; UPTD TPA","T1","2026-10-01","2026-11-30","Tinggi","Selesai","Selesai"],["Jepara","Jepara","JPR-01","Menyusun matriks baseline Jepara","Data","DLH; UPT TPA","T1","2026-10-01","2026-11-30","Tinggi","Selesai","Selesai"],["Kab. Magelang","Kab. Magelang","MGL-01","Analisis beban kerja SDM","D4","UPTD BLUD","T2","2026-12-01","2027-02-28","Tinggi","Belum mulai","Terjadwal"],["Banyuwangi","Banyuwangi","BWI-01","Klarifikasi dasar hukum BLUD","D2","DLH; UPT","T1","2026-10-01","2026-11-30","Sedang","Belum mulai","Perlu dimulai"]],
+"risiko":[["R-01","Regulasi","Tumpang tindih kewenangan antar-unit",3,4,12,"Tinggi","PPK & Subdit Perkim"],["R-02","Regulasi","Proses penerbitan Raperda/Perkada tertunda",4,4,16,"Sangat tinggi","Pemda & DPRD"],["R-08","Kelembagaan","Kesiapan operator tertinggal jadwal konstruksi",4,5,20,"Sangat tinggi","CPMU & Pemda"],["R-09","Kelembagaan","Pembiayaan O&M tidak memadai",4,5,20,"Sangat tinggi","Pemda (BPKAD)"],["R-10","Data","Data baseline tidak konsisten / terlambat",4,3,12,"Tinggi","TA Kelembagaan"]]};
+
+const U = D.skor.map(r=>r[0]);
+let curView = 'ringkasan', curUnit = 'Jepara', charts = [];
+const fmt = (n,d=1) => n==null?'-':Number(n).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pill = (s) => {
+  let cls = 'p-info';
+  if(['Selesai','Go','Terpenuhi','A','Rendah'].includes(s)) cls = 'p-good';
+  if(['No-go','Belum mulai','Perlu dimulai','Tinggi','Sangat tinggi','C'].includes(s)) cls = 'p-bad';
+  if(['Berkembang','Sedang','B','Terjadwal'].includes(s)) cls = 'p-warn';
+  return `<span class="pill ${cls}">${s}</span>`;
+};
+
+/* ROUTER & VIEWS */
+function goView(v) {
+  curView = v;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  charts.forEach(c => c.destroy()); charts = [];
+  const container = document.getElementById('app-view');
+  container.innerHTML = '';
+  
+  const titleMap = {ringkasan:'Ringkasan Operasional', unit:'Profil Unit Pemda', peta:'Peta Jalan Aksi', kesiapan:'Matriks Kesiapan', risiko:'Register Risiko'};
+  document.getElementById('header-subtitle').innerText = titleMap[v];
+  
+  if(v==='ringkasan') renderRingkasan(container);
+  else if(v==='unit') renderUnit(container);
+  else if(v==='peta') renderPeta(container);
+  else if(v==='kesiapan') renderKesiapan(container);
+  else if(v==='risiko') renderRisiko(container);
+  window.scrollTo(0,0);
+}
+
+/* 1. RINGKASAN VIEW */
+function renderRingkasan(m) {
+  const sk = D.skor, mean = sk.map(r=>r[11]).reduce((a,b)=>a+b,0)/sk.length;
+  const nogo = sk.filter(r=>r[15]==='No-go').length;
+  const done = D.aksi.filter(a=>a[10]==='Selesai').length;
+  
+  m.innerHTML = `
+    <div class="kpi-slider">
+      <div class="kpi-card"><span>Rata Skor</span><b>${fmt(mean,2)}</b><small>Skala 1 - 4</small></div>
+      <div class="kpi-card"><span>Status No-Go</span><b style="color:var(--bad)">${nogo} Unit</b><small>Perlu Atensi</small></div>
+      <div class="kpi-card"><span>Aksi Selesai</span><b style="color:var(--good)">${done}/${D.aksi.length}</b><small>Peta Jalan</small></div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">Skor Kesiapan per Unit Pemda</div>
+      <div class="chart-box"><canvas id="c-skor"></canvas></div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">Daftar Unit Perhatian Utama</div>
+      ${sk.filter(r=>r[15]==='No-go').map(r=>`
+        <div class="acc-item" onclick="curUnit='${r[0]}'; goView('unit');">
+          <div class="acc-header">
+            <div><strong>${r[0]}</strong> <br><small style="color:var(--text-muted)">${r[1]}</small></div>
+            <div>${pill(r[15])}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  const ctx = document.getElementById('c-skor');
+  if(ctx) {
+    charts.push(new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: sk.map(r=>r[0]),
+        datasets: [{ data: sk.map(r=>r[11]), backgroundColor: '#0E6B66', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 4 } } }
+    }));
+  }
+}
+
+/* 2. PROFIL UNIT VIEW */
+function renderUnit(m) {
+  const uOpt = U.map(u => `<option value="${u}" ${u===curUnit?'selected':''}>${u}</option>`).join('');
+  const idx = U.indexOf(curUnit);
+  const s = D.skor[idx], un = D.unit[idx];
+  const uAksi = D.aksi.filter(a => a[1]===curUnit);
+
+  m.innerHTML = `
+    <select class="mobile-select" id="unit-selector" onchange="curUnit=this.value; renderUnit(document.getElementById('app-view'))">${uOpt}</select>
+    
+    <div class="card">
+      <div class="card-title">${un[1]} ${pill(s[15])}</div>
+      <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px">${un[5]} (${un[6]})</p>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:12px">
+        <div style="background:var(--surface-sub); padding:8px; border-radius:6px"><strong>Grup:</strong> Kelompok ${s[14]}</div>
+        <div style="background:var(--surface-sub); padding:8px; border-radius:6px"><strong>Tahap:</strong> Tahap ${s[13]}</div>
+        <div style="background:var(--surface-sub); padding:8px; border-radius:6px"><strong>Skor:</strong> ${fmt(s[11],2)} / 4.0</div>
+        <div style="background:var(--surface-sub); padding:8px; border-radius:6px"><strong>Risiko:</strong> ${pill(s[16])}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Aksi Peta Jalan (${uAksi.length})</div>
+      ${uAksi.length ? uAksi.map(a=>`
+        <div class="acc-item">
+          <div class="acc-header">
+            <div><b>${a[2]}</b>: ${a[3]}</div>
+          </div>
+          <div class="acc-body">
+            <div><b>PIC:</b> ${a[5]}</div>
+            <div><b>Waktu:</b> ${a[6]} (${a[7]} s/d ${a[8]})</div>
+            <div style="margin-top:4px">${pill(a[9])} ${pill(a[10])}</div>
+          </div>
+        </div>
+      `).join('') : '<p style="font-size:12px; color:var(--text-muted)">Tidak ada aksi terdaftar untuk unit ini.</p>'}
+    </div>
+  `;
+}
+
+/* 3. PETA JALAN VIEW */
+function renderPeta(m) {
+  m.innerHTML = `
+    <input type="text" id="peta-q" class="mobile-input" placeholder="Cari Aksi atau PIC..." oninput="filterPeta()">
+    <div id="peta-list"></div>
+  `;
+  filterPeta();
+}
+
+function filterPeta() {
+  const q = (document.getElementById('peta-q')?.value || '').toLowerCase();
+  const res = D.aksi.filter(a => a[2].toLowerCase().includes(q) || a[3].toLowerCase().includes(q) || a[1].toLowerCase().includes(q));
+  document.getElementById('peta-list').innerHTML = res.map(a => `
+    <div class="acc-item">
+      <div class="acc-header">
+        <div><small style="color:var(--primary); font-weight:700">${a[1]}</small><br><b>${a[2]}</b>: ${a[3]}</div>
+        <div>${pill(a[9])}</div>
+      </div>
+      <div class="acc-body">
+        <p style="margin:0 0 6px"><strong>Target:</strong> ${a[7]} s/d ${a[8]}</p>
+        <p style="margin:0 0 6px"><strong>PIC:</strong> ${a[5]}</p>
+        <div>${pill(a[10])} ${pill(a[11])}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* 4. MATRIKS KESIAPAN VIEW */
+function renderKesiapan(m) {
+  m.innerHTML = `
+    <div class="card">
+      <div class="card-title">Matriks Skor 7 Dimensi</div>
+      <div class="table-wrapper">
+        <table class="m-table">
+          <thead>
+            <tr><th>Unit</th><th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>D6</th><th>D7</th><th>Skor</th></tr>
+          </thead>
+          <tbody>
+            ${D.skor.map(r=>`
+              <tr>
+                <td><b>${r[0]}</b></td>
+                <td>${r[3]||'-'}</td><td>${r[4]||'-'}</td><td>${r[5]||'-'}</td>
+                <td>${r[6]||'-'}</td><td>${r[7]||'-'}</td><td>${r[8]||'-'}</td>
+                <td>${r[9]||'-'}</td><td><b>${fmt(r[11],2)}</b></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* 5. RISIKO VIEW */
+function renderRisiko(m) {
+  m.innerHTML = `
+    <div class="card">
+      <div class="card-title">Register Risiko Utama</div>
+      ${D.risiko.map(r=>`
+        <div class="acc-item">
+          <div class="acc-header">
+            <div><small style="color:var(--text-muted)">${r[0]} · ${r[1]}</small><br><b>${r[2]}</b></div>
+            <div>${pill(r[6])}</div>
+          </div>
+          <div class="acc-body">
+            <p style="margin:0 0 4px"><strong>Pemilik Risiko:</strong> ${r[7]}</p>
+            <p style="margin:0"><strong>Skor Dampak/Prob:</strong> P${r[3]} x D${r[4]} = ${r[5]}</p>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* AUTHENTICATION & INITIALIZATION */
+document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => goView(b.dataset.v));
+
+document.getElementById('lform').onsubmit = (e) => {
+  e.preventDefault();
+  const u = document.getElementById('lu').value.trim();
+  const p = document.getElementById('lp').value;
+  if(u === 'swm_sud' && p === 'swm_sud') {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    goView('ringkasan');
+  } else {
+    document.getElementById('lerr').innerText = 'User ID atau Password salah.';
+  }
+};
+
+document.getElementById('btn-logout').onclick = () => {
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+};
+
+document.getElementById('btn-theme').onclick = () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+};
+</script>
+</body>
+</html>
